@@ -41,9 +41,9 @@ st.latex(r"""F(A,B) = A \times Size^B \times EM""")
 st.write(c.estimated_efforts)
 
 st.header("Magnitude relative error (MRE)")
-st.latex(r"""MRE = \frac{|AE-EE|}{EE}""")
+st.latex(r"""MRE = \frac{|AE-EE|}{EE} \times 100\%""")
 st.write(c.magnitude_relative_error * 100)
 
-st.header("Mean magnitude relative error (<MRE)")
+st.header("Mean magnitude relative error (MMRE)")
 st.latex(r"""MMRE = \frac{1}{N} \sum_{x=1}^{N} MRE""")
-st.write(c.mean_magnitude_relative_error)
+st.dataframe([c.mean_magnitude_relative_error * 100])
