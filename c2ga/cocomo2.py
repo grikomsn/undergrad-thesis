@@ -1,51 +1,46 @@
-from typing import Union
-
-from numpy import ndarray
-from pandas import DataFrame, Series
-from pandas.api.extensions import ExtensionArray
-from pandas.io.parsers import TextFileReader
+from c2ga.typings import UnifiedDataFrame
 
 
 class Cocomo2:
-    df: Union[DataFrame, Series, TextFileReader]
+    df: UnifiedDataFrame
 
     a: float
     b: float
 
     em_cols = [
-        "RELY", "DATA", "CPLX", "RUSE", "DOCU", "TIME", "STOR", "PVOL", "ACAP", "PCAP", "PCON", "APEX", "PLEX", "LTEX",
-        "TOOL", "SITE", "SCED"
+        'RELY', 'DATA', 'CPLX', 'RUSE', 'DOCU', 'TIME', 'STOR', 'PVOL', 'ACAP', 'PCAP', 'PCON', 'APEX', 'PLEX', 'LTEX',
+        'TOOL', 'SITE', 'SCED'
     ]
 
-    def __init__(self, data: Union[DataFrame, Series, TextFileReader], a: float, b: float):
+    def __init__(self, data: UnifiedDataFrame, a: float, b: float):
         self.df = data
         self.a = a
         self.b = b
 
     @property
-    def em_values(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
+    def em_values(self) -> UnifiedDataFrame:
         return self.df[self.em_cols]
 
     @property
-    def locs(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
-        return self.df["LOC"]
+    def locs(self) -> UnifiedDataFrame:
+        return self.df['LOC']
 
     @property
-    def actual_efforts(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
-        return self.df["AE"]
+    def actual_efforts(self) -> UnifiedDataFrame:
+        return self.df['AE']
 
     @property
-    def effort_multipliers(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
+    def effort_multipliers(self) -> UnifiedDataFrame:
         return self.em_values.prod(axis=1)
 
     @property
-    def estimated_efforts(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
+    def estimated_efforts(self) -> UnifiedDataFrame:
         em = self.effort_multipliers
         size = self.locs / 1000
         return self.a * size.pow(self.b) * em
 
     @property
-    def magnitude_relative_error(self) -> Union[DataFrame, ExtensionArray, ndarray, Series]:
+    def magnitude_relative_error(self) -> UnifiedDataFrame:
         ae = self.actual_efforts
         ee = self.estimated_efforts
         return (ae - ee).abs() / ae
