@@ -46,5 +46,13 @@ class Cocomo2:
         return (ae - ee).abs() / ae
 
     @property
+    def mre(self):
+        return self.magnitude_relative_error
+
+    @property
     def mean_magnitude_relative_error(self):
         return self.magnitude_relative_error.mean()
+
+    @property
+    def mmre(self):
+        return self.mean_magnitude_relative_error
