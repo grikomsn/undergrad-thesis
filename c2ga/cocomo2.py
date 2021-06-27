@@ -2,7 +2,7 @@ from c2ga.typings import UnifiedDataFrame
 
 
 class Cocomo2:
-    df: UnifiedDataFrame
+    data: UnifiedDataFrame
 
     a: float
     b: float
@@ -13,21 +13,21 @@ class Cocomo2:
     ]
 
     def __init__(self, data: UnifiedDataFrame, a: float, b: float):
-        self.df = data
+        self.data = data
         self.a = a
         self.b = b
 
     @property
     def em_values(self) -> UnifiedDataFrame:
-        return self.df[self.em_cols]
+        return self.data[self.em_cols]
 
     @property
     def locs(self) -> UnifiedDataFrame:
-        return self.df['LOC']
+        return self.data['LOC']
 
     @property
     def actual_efforts(self) -> UnifiedDataFrame:
-        return self.df['AE']
+        return self.data['AE']
 
     @property
     def effort_multipliers(self) -> UnifiedDataFrame:

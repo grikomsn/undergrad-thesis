@@ -44,7 +44,7 @@ Optimasi Metode COCOMO II Menggunakan Algoritma Genetika
 
 st.header('Load dataset')
 st.write(f'Using `{dataset_select}` dataset (change on sidebar)')
-st.write(c.df)
+st.write(c.data)
 
 '---'
 
