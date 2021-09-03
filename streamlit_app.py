@@ -1,16 +1,9 @@
-# -*- coding: utf-8 -*-
-
-from typing import Union
-
 import numpy as np
 import pandas as pd
 import streamlit as st
-from pandas import DataFrame, Series
-from pandas.api.extensions import ExtensionArray
-from pandas.io.parsers import TextFileReader
-from pyeasyga.pyeasyga import GeneticAlgorithm
 
-UnifiedDataFrame = Union[DataFrame, ExtensionArray, Series, TextFileReader]
+from undergrad_thesis.cocomo2 import Cocomo2
+from undergrad_thesis.ga import GeneticAlgorithm
 
 st.set_page_config(page_title='Optimasi Metode COCOMO II Menggunakan Algoritma Genetika', page_icon='👨‍💻')
 
@@ -20,78 +13,25 @@ st.set_page_config(page_title='Optimasi Metode COCOMO II Menggunakan Algoritma G
 '''
 
 
-# main cocomo ii instance
-class Cocomo2:
-    data: UnifiedDataFrame
-
-    a: float
-    b: float
-
-    em_cols = [
-        'RELY', 'DATA', 'CPLX', 'RUSE', 'DOCU', 'TIME', 'STOR', 'PVOL', 'ACAP', 'PCAP', 'PCON', 'APEX', 'PLEX', 'LTEX',
-        'TOOL', 'SITE', 'SCED'
-    ]
-
-    def __init__(self, data: UnifiedDataFrame, a: float = None, b: float = None):
-        self.data = data
-        self.a = a
-        self.b = b
-
-    @property
-    def em_values(self) -> UnifiedDataFrame:
-        return self.data[self.em_cols]
-
-    @property
-    def locs(self) -> UnifiedDataFrame:
-        return self.data['LOC']
-
-    @property
-    def actual_efforts(self) -> UnifiedDataFrame:
-        return self.data['AE']
-
-    @property
-    def effort_multipliers(self) -> UnifiedDataFrame:
-        return self.em_values.prod(axis=1)
-
-    def estimated_efforts(self, a: float = None, b: float = None) -> UnifiedDataFrame:
-        if a is None:
-            if self.a is None:
-                raise Exception('parameter a is empty')
-            a = self.a
-        if b is None:
-            if self.b is None:
-                raise Exception('parameter b is empty')
-            b = self.b
-
-        em = self.effort_multipliers
-        size = self.locs / 1000
-        return a * size.pow(b) * em
-
-    def magnitude_relative_error(self, ee: UnifiedDataFrame = None) -> UnifiedDataFrame:
-        ae = self.actual_efforts
-
-        if ee is None:
-            ee = self.estimated_efforts()
-
-        return (ae - ee).abs() / ae
-
-    def mean_magnitude_relative_error(self, mre: UnifiedDataFrame = None):
-        if mre is None:
-            mre = self.magnitude_relative_error()
-
-        return mre.mean()
-
-
 # load turkish.csv cocomo data
-csv_data = pd.read_csv('turkish.csv', sep=';')
+@st.cache()
+def load_csv_data():
+    return pd.read_csv('turkish.csv', sep=';')
+
+
+csv_data = load_csv_data()
 
 # initialize cocomo object
 c = Cocomo2(data=csv_data, a=2.94, b=0.91)
 
-'## Dataset COCOMO II turkish.csv'
+'''
+## 1. Dataset COCOMO II
+
+Sourced from `turkish.csv`
+'''
 st.write(csv_data)
 
-'## Compute EM, EE, MRE'
+'## 2. Compute EM, EE, MRE, MMRE'
 with st.container():
     left, right = st.columns(2)
 
@@ -109,7 +49,9 @@ with st.container():
     $$
     EE = A \times Size^B \times EM
     $$
-    
+    ''')
+
+    right.write(r'''
     ### Magnitude relative error (MRE)
     
     $$
@@ -123,21 +65,23 @@ with st.container():
     $$
     ''')
 
-    right.write(pd.DataFrame({
+    left, right = st.columns([2, 1])
+
+    left.write(pd.DataFrame({
         'EM': c.effort_multipliers,
         'EE': c.estimated_efforts(),
         'MRE': c.magnitude_relative_error(),
         'MRE %': c.magnitude_relative_error() * 100,
     }))
 
-    right.write(pd.DataFrame(pd.DataFrame({
+    right.write(pd.DataFrame({
         'MMRE': [c.mean_magnitude_relative_error()],
         'MMRE %': [c.mean_magnitude_relative_error() * 100],
-    })))
+    }))
 
 '---'
 
-'## Genetic Algorithm'
+'## 3. Genetic Algorithm'
 
 test_indiv = [2.94, 0.91]
 genes_size = len(test_indiv)
@@ -213,6 +157,8 @@ with st.container():
     
     $$
     F(x) = \frac{1}{1+f(x)}
+    $$
+    $$
     f(x) = F(A,B)
     $$
     ''')
@@ -222,8 +168,8 @@ with st.container():
     ''')
 
     right.write(pd.DataFrame({
-        "fitness fn result": [fitness_function(test_indiv, [])],
-        "ee result": [1.0 / (1.0 + objective_function(test_indiv).mean())],
+        "Fitness": [fitness_function(test_indiv, [])],
+        "EE": [1.0 / (1.0 + objective_function(test_indiv).mean())],
     }))
 
 
@@ -243,6 +189,18 @@ def splice_generation(generation):
 
 '---'
 
+
+def fyi_best(chrmsm):
+    best_fitness, [best_a, best_b] = chrmsm
+
+    return pd.DataFrame({
+        # 'Best fitness': [best_fitness],
+        'Best fitness %': [best_fitness * 100],
+        'Best A': [best_a],
+        'Best B': [best_b],
+    })
+
+
 r'''
 ### Run first generation
 
@@ -251,21 +209,36 @@ Generated population with constraint $0.0 \ge x_i \ge 1.0$
 
 ga.create_first_generation()
 
-'Generation #1'
-st.write(pd.DataFrame(splice_generation(ga.current_generation)))
+with st.container():
+    'Generation #001'
+    left, right = st.columns(2)
+    left.write(pd.DataFrame(splice_generation(ga.current_generation)))
+    right.write(fyi_best(ga.best_individual()))
 
-for i in range(1, ga.generations):
-    ga.create_new_population()
-    ga.calculate_population_fitness()
-    ga.rank_population()
+with st.expander(f'Generation 2-{ga.generations}'):
+    for i in range(1, ga.generations):
+        ga.create_new_population()
+        ga.calculate_population_fitness()
+        ga.rank_population()
+        with st.container():
+            f'Generation #{(i + 1):03}'
+            left, right = st.columns(2)
+            left.write(pd.DataFrame(splice_generation(ga.current_generation)))
+            right.write(fyi_best(ga.best_individual()))
 
-    f'Generation #{i + 1}'
-    st.write(pd.DataFrame(splice_generation(ga.current_generation)))
+'---'
 
-(best_fitness, best_genes) = ga.best_individual()
+with st.container():
+    final_fitness, [final_a, final_b] = ga.best_individual()
 
-f'''
-**Best individual**
-- fitness: {best_fitness}
-- genes: {best_genes} 
-'''
+    f'''
+    ## 4. Conclusion
+    
+    Result from {ga.generations} generations: 
+    
+    - Best fitness: `{final_fitness}`
+    - Best fitness %: `{final_fitness * 100} %`
+    - Best A: `{final_a}`
+    - Best B: `{final_b}`
+    '''
+
