@@ -88,7 +88,7 @@ genes_size = len(test_indiv)
 
 with st.sidebar:
     population_size = st.slider(
-        label="Population size",
+        label='Population size',
         min_value=2,
         max_value=100,
         step=1,
@@ -96,7 +96,7 @@ with st.sidebar:
     )
 
     crossover_rate = st.slider(
-        label="Crossover rate",
+        label='Crossover rate',
         min_value=0.0,
         max_value=1.0,
         step=0.05,
@@ -104,7 +104,7 @@ with st.sidebar:
     )
 
     mutation_rate = st.slider(
-        label="Mutation rate",
+        label='Mutation rate',
         min_value=0.0,
         max_value=1.0,
         step=0.05,
@@ -168,22 +168,22 @@ with st.container():
     ''')
 
     right.write(pd.DataFrame({
-        "Fitness": [fitness_function(test_indiv, [])],
-        "EE": [1.0 / (1.0 + objective_function(test_indiv).mean())],
+        'Fitness': [fitness_function(test_indiv, [])],
+        'EE': [1.0 / (1.0 + objective_function(test_indiv).mean())],
     }))
 
 
 def splice_generation(generation):
     spliced = {
-        "Fitness": [],
-        "A": [],
-        "B": [],
+        'Fitness': [],
+        'A': [],
+        'B': [],
     }
     for chrmsm in generation:
         [a, b] = chrmsm.genes
-        spliced["Fitness"].append(chrmsm.fitness)
-        spliced["A"].append(a)
-        spliced["B"].append(b)
+        spliced['Fitness'].append(chrmsm.fitness)
+        spliced['A'].append(a)
+        spliced['B'].append(b)
     return spliced
 
 
@@ -215,8 +215,11 @@ with st.container():
     left.write(pd.DataFrame(splice_generation(ga.current_generation)))
     right.write(fyi_best(ga.best_individual()))
 
+progress = st.progress(1)
+
 with st.expander(f'Generation 2-{ga.generations}'):
     for i in range(1, ga.generations):
+        progress.progress(i)
         ga.create_new_population()
         ga.calculate_population_fitness()
         ga.rank_population()
@@ -225,6 +228,8 @@ with st.expander(f'Generation 2-{ga.generations}'):
             left, right = st.columns(2)
             left.write(pd.DataFrame(splice_generation(ga.current_generation)))
             right.write(fyi_best(ga.best_individual()))
+    progress.progress(100)
+    progress.empty()
 
 '---'
 
@@ -241,4 +246,3 @@ with st.container():
     - Best A: `{final_a}`
     - Best B: `{final_b}`
     '''
-
