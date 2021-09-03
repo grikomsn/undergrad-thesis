@@ -87,6 +87,22 @@ test_indiv = [2.94, 0.91]
 genes_size = len(test_indiv)
 
 with st.sidebar:
+    low_indiv = st.slider(
+        label='Lowest individual',
+        min_value=0,
+        max_value=10,
+        step=1,
+        value=0,
+    )
+
+    high_indiv = st.slider(
+        label='Highest individual',
+        min_value=0,
+        max_value=10,
+        step=1,
+        value=1,
+    )
+
     population_size = st.slider(
         label='Population size',
         min_value=2,
@@ -123,7 +139,7 @@ ga = GeneticAlgorithm(
 
 
 def create_individual(_):
-    return list(np.random.uniform(size=genes_size, low=0.0, high=1.0))
+    return list(np.random.uniform(size=genes_size, low=low_indiv, high=high_indiv))
 
 
 ga.create_individual = create_individual
